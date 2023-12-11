@@ -1,0 +1,46 @@
+---
+import type { CollectionEntry } from 'astro:content';
+import { cva } from 'class-variance-authority';
+import { Image } from 'astro:assets';
+export type Props = { project: CollectionEntry<'projects'> };
+
+const { project } = Astro.props;
+
+const layout = cva('flex', {
+	variants: {
+		grid: {
+			square: 'aspect-square',
+			wide: 'md:col-span-2',
+			tall: 'md:row-span-2',
+		},
+	},
+});
+
+const label = cva('relative', {
+	variants: {
+		placement: {
+			tl: '',
+			tr: 'ml-auto',
+			bl: 'mt-auto',
+			br: 'ml-auto mt-auto',
+		},
+	},
+});
+---
+
+<li class={layout(project.data)}>
+	<a
+		href={project.data.externalLink ? project.data.externalLink : `/${project.slug}`}
+		rel={project.data.externalLink ? 'noopener noreferrer' : undefined}
+		transition:animate="none"
+		transition:name={project.slug}
+		class="rounded-3xl relative transition-transform ease-expo-out duration-500 active:scale-95 bg-neutral-lightest p-4 w-full h-full font-bold text-base leading-tight flex flex-col"
+	>
+		<Image class="absolute inset-0" src={project.data.image} alt={project.data.imageAlt} />
+
+		<div class={label(project.data)}>
+			<p class="text-neutral-dark">{project.data.title}</p>
+			<p class="text-neutral-light">{project.data.subtitle}</p>
+		</div>
+	</a>
+</li>

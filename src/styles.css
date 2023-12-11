@@ -1,0 +1,28 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@font-face {
+	font-family: 'neue-haas-grotesk-display';
+	src: url('/fonts/neue-haas-grotesk-display-medium.woff2') format('woff2');
+	font-weight: 500;
+	font-display: swap;
+}
+
+@font-face {
+	font-family: 'neue-haas-grotesk-display';
+	src: url('/fonts/neue-haas-grotesk-display-bold.woff2') format('woff2');
+	font-weight: 700;
+}
+
+@font-face {
+	font-family: 'neue-haas-grotesk-text';
+	src: url('/fonts/neue-haas-grotesk-text-regular.woff2') format('woff2');
+	font-weight: 400;
+}
+
+@font-face {
+	font-family: 'neue-haas-grotesk-text';
+	src: url('/fonts/neue-haas-grotesk-text-bold.woff2') format('woff2');
+	font-weight: 700;
+}

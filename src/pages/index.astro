@@ -1,0 +1,84 @@
+---
+import { getCollection } from 'astro:content';
+import clsx from 'clsx';
+import ProjectCard from '~/components/ProjectCard.astro';
+import Layout from '~/layouts/Layout.astro';
+import iconsHref from '~/icons.svg?url';
+
+const projects = await getCollection('projects');
+const scope = [
+	{ label: 'design', value: 0.75, class: 'ml-auto' },
+	{ label: 'frontend', value: 1 },
+	{ label: 'backend', value: 0.75 },
+];
+---
+
+<Layout class="flex flex-col gap-8" title=":)">
+	<header class="grid md:grid-cols-3 gap-4">
+		<h1
+			class="font-bold text-lg md:text-base tracking-tight text-neutral-dark [text-wrap:balance] md:col-span-2 leading-tight"
+		>
+			freddie is a design-driven <span class="whitespace-nowrap"
+				>product engineer<span class="text-neutral-light">✲</span></span
+			> based in london.
+			<br />he works at inploi, a super cool hiring tech startup
+		</h1>
+
+		<ul
+			class="flex gap-3 ring text-neutral-base ring-neutral-lightest rounded-full self-start justify-self-start md:justify-self-end p-3"
+		>
+			<li>
+				<svg width="15" height="15" viewBox="0 0 15 15" fill="none" xmlns="http://www.w3.org/2000/svg"
+					><title>GitHub</title><use href={`${iconsHref}#github`}></use></svg
+				>
+			</li>
+
+			<li>
+				<svg width="15" height="15" viewBox="0 0 15 15" fill="none" xmlns="http://www.w3.org/2000/svg"
+					><title>LinkedIn</title><use href={`${iconsHref}#linkedin`}></use>
+				</svg>
+			</li>
+
+			<li>
+				<svg width="15" height="15" viewBox="0 0 15 15" fill="none" xmlns="http://www.w3.org/2000/svg"
+					><title>Twitter</title><use href={`${iconsHref}#twitter`}></use></svg
+				>
+			</li>
+		</ul>
+	</header>
+
+	<aside class="grid md:grid-cols-3 gap-4 items-center">
+		<div class="flex flex-col gap-4">
+			<p class="-indent-3 text-sm text-neutral-base [text-wrap:balance]">
+				✲ his scope ranges from design to <span class="whitespace-nowrap">full-stack</span> software engineering, with a
+				focus on creating interfaces that feel right
+			</p>
+		</div>
+		<ul aria-label="scope diagram" class="flex gap-2 md:col-span-2">
+			{
+				scope.map(scope => (
+					<li class="flex flex-col gap-1 flex-1">
+						<div
+							aria-label={scope.label}
+							aria-valuemax="100"
+							aria-valuemin="0"
+							aria-valuenow={scope.value * 100}
+							class="w-full h-1.5 bg-neutral-lightest rounded-full relative"
+						>
+							<div
+								class={clsx('rounded-full h-full bg-neutral-light', scope.class)}
+								style={`width: ${scope.value * 100}%`}
+							/>
+						</div>
+
+						<p class="text-center text-xs font-bold not-sr-only text-neutral-base">{scope.label}</p>
+					</li>
+				))
+			}
+		</ul>
+	</aside>
+
+	<ul class="auto-rows-fr grid md:grid-cols-3 gap-4">
+		{projects.map(project => <ProjectCard project={project} />)}
+	</ul>
+</Layout>
