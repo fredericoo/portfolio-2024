@@ -2,6 +2,11 @@
 @tailwind components;
 @tailwind utilities;
 
+@layer utilities {
+	.fr {
+		@apply outline-none focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-neutral-base;
+	}
+}
 @font-face {
 	font-family: 'neue-haas-grotesk-display';
 	src: url('/fonts/neue-haas-grotesk-display-medium.woff2') format('woff2');

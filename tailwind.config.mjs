@@ -7,6 +7,7 @@ export default {
 			body: ['neue-haas-grotesk-text'],
 		},
 		colors: {
+			transparent: 'transparent',
 			neutral: {
 				dark: '#1A1523',
 				base: '#776E6F',

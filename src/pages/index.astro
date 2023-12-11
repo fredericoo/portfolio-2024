@@ -6,6 +6,13 @@ import Layout from '~/layouts/Layout.astro';
 import iconsHref from '~/icons.svg?url';
 
 const projects = await getCollection('projects');
+projects.sort((a, b) => (a.data.publishedAt < b.data.publishedAt ? 1 : -1));
+
+const socials = [
+	{ name: 'github', svg: `${iconsHref}#github`, href: 'https://github.com/fredericoo' },
+	{ name: 'linkedin', svg: `${iconsHref}#linkedin`, href: 'https://github.com/fredericoo' },
+	{ name: 'twitter', svg: `${iconsHref}#twitter`, href: 'https://twitter.com/fredoiq' },
+];
 const scope = [
 	{ label: 'design', value: 0.75, class: 'ml-auto' },
 	{ label: 'frontend', value: 1 },
@@ -27,23 +34,24 @@ const scope = [
 		<ul
 			class="flex gap-3 ring text-neutral-base ring-neutral-lightest rounded-full self-start justify-self-start md:justify-self-end p-3"
 		>
-			<li>
-				<svg width="15" height="15" viewBox="0 0 15 15" fill="none" xmlns="http://www.w3.org/2000/svg"
-					><title>GitHub</title><use href={`${iconsHref}#github`}></use></svg
-				>
-			</li>
-
-			<li>
-				<svg width="15" height="15" viewBox="0 0 15 15" fill="none" xmlns="http://www.w3.org/2000/svg"
-					><title>LinkedIn</title><use href={`${iconsHref}#linkedin`}></use>
-				</svg>
-			</li>
-
-			<li>
-				<svg width="15" height="15" viewBox="0 0 15 15" fill="none" xmlns="http://www.w3.org/2000/svg"
-					><title>Twitter</title><use href={`${iconsHref}#twitter`}></use></svg
-				>
-			</li>
+			{
+				socials.map(social => (
+					<li>
+						<a
+							href={social.href}
+							rel="noopener noreferrer"
+							class="text-neutral-base block fr rounded-full hover:text-neutral-dark duration-500 ease-expo-out transition-all active:scale-95"
+						>
+							<svg width="15" height="15" viewBox="0 0 15 15" fill="none" xmlns="http://www.w3.org/2000/svg">
+								<>
+									<title>{social.name}</title>
+									<use href={social.svg} />
+								</>
+							</svg>
+						</a>
+					</li>
+				))
+			}
 		</ul>
 	</header>
 
@@ -78,7 +86,7 @@ const scope = [
 		</ul>
 	</aside>
 
-	<ul class="auto-rows-fr grid md:grid-cols-3 gap-4">
+	<ul class="auto-rows-fr grid md:grid-cols-3 gap-4 grid-flow-dense">
 		{projects.map(project => <ProjectCard project={project} />)}
 	</ul>
 </Layout>

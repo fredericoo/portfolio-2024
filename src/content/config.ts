@@ -11,6 +11,7 @@ const projects = defineCollection({
 			imageAlt: z.string(),
 			externalLink: z.string().url().optional(),
 			grid: z.enum(['square', 'wide', 'tall']).default('square'),
+			publishedAt: z.date(),
 		}),
 });
 

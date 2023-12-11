@@ -20,7 +20,12 @@ const { title, class: className } = Astro.props;
 		<title>{title}</title>
 		<ViewTransitions />
 	</head>
-	<body class={clsx('max-w-5xl mx-auto p-8 font-body text-neutral-dark', className)}>
+	<body
+		class={clsx(
+			'max-w-5xl selection:bg-neutral-dark selection:text-neutral-lightest mx-auto p-8 font-body text-neutral-dark',
+			className,
+		)}
+	>
 		<slot />
 	</body>
 </html>

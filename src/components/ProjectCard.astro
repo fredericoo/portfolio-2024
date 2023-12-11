@@ -34,9 +34,9 @@ const label = cva('relative', {
 		rel={project.data.externalLink ? 'noopener noreferrer' : undefined}
 		transition:animate="none"
 		transition:name={project.slug}
-		class="rounded-3xl relative transition-transform ease-expo-out duration-500 active:scale-95 bg-neutral-lightest p-4 w-full h-full font-bold text-base leading-tight flex flex-col"
+		class="rounded-3xl relative fr transition-all overflow-hidden ease-expo-out duration-500 active:scale-95 bg-neutral-lightest p-4 w-full h-full font-bold text-base leading-tight flex flex-col"
 	>
-		<Image class="absolute inset-0" src={project.data.image} alt={project.data.imageAlt} />
+		<Image draggable="false" class="absolute inset-0" src={project.data.image} alt={project.data.imageAlt} />
 
 		<div class={label(project.data)}>
 			<p class="text-neutral-dark">{project.data.title}</p>
