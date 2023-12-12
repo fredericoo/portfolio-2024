@@ -1,9 +1,9 @@
 ---
 import { getCollection } from 'astro:content';
 import clsx from 'clsx';
-import ProjectCard from '~/components/ProjectCard.astro';
-import Layout from '~/layouts/Layout.astro';
-import iconsHref from '~/icons.svg?url';
+import ProjectCard from '../components/ProjectCard.astro';
+import Layout from '../layouts/Layout.astro';
+import iconsHref from '../icons.svg?url';
 
 const projects = await getCollection('projects');
 projects.sort((a, b) => (a.data.publishedAt < b.data.publishedAt ? 1 : -1));

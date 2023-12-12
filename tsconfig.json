@@ -1,15 +1,10 @@
 {
-  "extends": "astro/tsconfigs/strictest",
-  "compilerOptions": {
-    "strictNullChecks": true,
-    "allowJs": true,
-    "baseUrl": "/Users/freddie/Documents/portfolio-2024",
-    "paths": {
-      "~/*": [
-        "./src/*"
-      ]
-    },
-    "jsx": "react-jsx",
-    "jsxImportSource": "react"
-  }
+	"extends": "astro/tsconfigs/strictest",
+	"compilerOptions": {
+		"strictNullChecks": true,
+		"allowJs": true,
+		"baseUrl": "/Users/freddie/Documents/portfolio-2024",
+		"jsx": "react-jsx",
+		"jsxImportSource": "react"
+	}
 }

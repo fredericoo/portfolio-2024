@@ -1,7 +1,7 @@
 ---
 import { getCollection } from 'astro:content';
-import Layout from '~/layouts/Layout.astro';
-import iconsHref from '~/icons.svg?url';
+import Layout from '../layouts/Layout.astro';
+import iconsHref from '../icons.svg?url';
 
 export async function getStaticPaths() {
 	const projects = await getCollection('projects');
