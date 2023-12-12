@@ -1,0 +1,48 @@
+---
+import clsx from 'clsx';
+import iconsHref from '../icons.svg?url';
+
+const socials = [
+	{ name: 'github', svg: `${iconsHref}#github`, href: 'https://github.com/fredericoo' },
+	{ name: 'linkedin', svg: `${iconsHref}#linkedin`, href: 'https://github.com/fredericoo' },
+	{ name: 'twitter', svg: `${iconsHref}#twitter`, href: 'https://twitter.com/fredoiq' },
+];
+
+type Props = {
+	class?: string;
+};
+
+const { class: className } = Astro.props;
+---
+
+<header class={clsx('grid md:grid-cols-3 gap-4', className)}>
+	<h1
+		class="font-bold text-lg md:text-base tracking-tight text-neutral-dark [text-wrap:balance] md:col-span-2 leading-tight"
+	>
+		freddie is a design-driven <span class="whitespace-nowrap"
+			>product engineer<span class="text-accent-base">✲</span></span
+		> based in london.
+		<br />he works at inploi, a super cool hiring tech startup
+	</h1>
+
+	<ul
+		class="flex gap-3 ring text-neutral-base ring-neutral-lighter rounded-full self-start justify-self-start md:justify-self-end p-3"
+	>
+		{
+			socials.map(social => (
+				<li>
+					<a
+						href={social.href}
+						rel="noopener noreferrer"
+						class="text-neutral-base block fr rounded-full hover:text-neutral-dark duration-500 ease-expo-out transition-all active:scale-95"
+					>
+						<svg width="15" height="15" viewBox="0 0 15 15" fill="none" xmlns="http://www.w3.org/2000/svg">
+							<title>{social.name}</title>
+							<use href={social.svg} />
+						</svg>
+					</a>
+				</li>
+			))
+		}
+	</ul>
+</header>

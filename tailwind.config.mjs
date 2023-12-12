@@ -15,7 +15,8 @@ export default {
 				dark: '#1A1523',
 				base: '#776E6F',
 				light: '#86848D',
-				lightest: '#E4E4E4',
+				lighter: '#E4E4E4',
+				lightest: '#f0f0f0',
 			},
 			accent: {
 				base: 'var(--colors-accent-base)',

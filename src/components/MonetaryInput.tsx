@@ -67,14 +67,14 @@ export const MonetaryInput: React.FC<MonetaryInputInternalProps> = ({
 		<div className={clsx('flex relative w-full', className)}>
 			<input type="hidden" value={internalValue.asNumber} name={name} />
 
-			<span className="inline-block text-neutral-lightest" style={{ width: CURRENCY_WIDTH }}>
+			<span className="inline-block text-neutral-lighter" style={{ width: CURRENCY_WIDTH }}>
 				{currencySymbol}
 			</span>
 			<LayoutGroup id={layoutId}>
 				<AnimatedCurrency value={displayValue.asString} specialCharacters={specialCharacters} />
 			</LayoutGroup>
 			<input
-				className="bg-transparent selection:bg-accent-base selection:text-transparent absolute z-0 inset-0 border-b border-neutral-light [font-kerning:none] p-0 transition-all duration-500 ease-expo-out text-transparent caret-neutral-base focus:border-b-accent-base focus:outline-none focus:shadow-[0_8px_6px_-6px_#e54d2e20]"
+				className="bg-transparent rounded-none selection:bg-neutral-lighter selection:text-transparent absolute z-0 inset-0 border-b border-neutral-light [font-kerning:none] p-0 transition-all duration-500 ease-expo-out text-transparent caret-neutral-base focus:border-b-accent-base focus:outline-none focus:shadow-[0_8px_6px_-6px_#e54d2e20]"
 				style={{ paddingInlineStart: CURRENCY_WIDTH }}
 				type="text"
 				inputMode="decimal"
@@ -109,7 +109,7 @@ export const AnimatedCurrency: React.FC<AnimatedCurrencyProps> = ({ value, speci
 						>
 							<motion.span
 								className={clsx('text-neutral-dark block select-none pointer-events-none', {
-									'opacity-25': value === '0',
+									'text-neutral-base': value === '0',
 								})}
 								variants={variants}
 								initial={'hidden'}

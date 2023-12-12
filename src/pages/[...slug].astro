@@ -1,7 +1,6 @@
 ---
 import { getCollection } from 'astro:content';
 import Layout from '../layouts/Layout.astro';
-import iconsHref from '../icons.svg?url';
 
 export async function getStaticPaths() {
 	const projects = await getCollection('projects');
@@ -15,24 +14,22 @@ const { project } = Astro.props;
 const { Content } = await project.render();
 ---
 
-<Layout title={project.data.title}>
-	<header>
-		<a
-			href="/"
-			class="font-bold hover:bg-neutral-lightest rounded-full pl-1 pr-2 text-lg md:text-base tracking-tight text-neutral-dark [text-wrap:balance] md:col-span-2 leading-tight inline-flex items-center gap-1 -ml-[calc(15px+0.50rem)]"
-			><svg aria-hidden width="15" height="15" viewBox="0 0 15 15" fill="none" xmlns="http://www.w3.org/2000/svg">
-				<use href={`${iconsHref}#arrow-left`}></use>
-			</svg><span>freddie</span>
-		</a>
-		<h1 class="font-bold text-4xl font-display text-neutral-light [text-wrap:balance] md:col-span-2 leading-none">
-			<span class="text-neutral-dark">{project.data.title}</span><br />
-			{project.data.subtitle}
-		</h1>
-	</header>
-	<main class="prose">
+<Layout
+	transition:animate="none"
+	transition:name={`container-${project.slug}`}
+	class="bg-[#f0f0f0] gap-4"
+	title={project.data.title}
+>
+	<h1
+		transition:animate="none"
+		transition:name={`title-${project.slug}`}
+		class="font-bold text-4xl font-display [text-wrap:balance] md:col-span-2 leading-none"
+	>
+		<p class="text-neutral-dark">{project.data.title}</p>
+		<p class="text-neutral-light">{project.data.subtitle}</p>
+	</h1>
+
+	<div class="prose">
 		<Content />
-	</main>
-	<footer>
-		<p class="text-center text-sm text-neutral-light">frederico batista, 2024</p>
-	</footer>
+	</div>
 </Layout>
