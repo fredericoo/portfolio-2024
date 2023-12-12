@@ -2,6 +2,17 @@
 @tailwind components;
 @tailwind utilities;
 
+@layer base {
+	:root {
+		--colors-accent-base: #e54d2e;
+
+		/* if supports p3 color gamut */
+		@supports (color-gamut: p3) {
+			--colors-accent-base: color(display-p3 1 0.249 0);
+		}
+	}
+}
+
 @layer utilities {
 	.fr {
 		@apply outline-none focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-neutral-base;

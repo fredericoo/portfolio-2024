@@ -1,6 +1,7 @@
 ---
 import { getCollection } from 'astro:content';
 import Layout from '~/layouts/Layout.astro';
+import iconsHref from '~/icons.svg?url';
 
 export async function getStaticPaths() {
 	const projects = await getCollection('projects');
@@ -15,12 +16,23 @@ const { Content } = await project.render();
 ---
 
 <Layout title={project.data.title}>
-	<div
-		transition:animate="none"
-		transition:name={project.slug}
-		class="rounded-3xl bg-neutral-lightest p-4 aspect-video"
-	>
-		{project.data.title}
-	</div>
-	<Content />
+	<header>
+		<a
+			href="/"
+			class="font-bold hover:bg-neutral-lightest rounded-full pl-1 pr-2 text-lg md:text-base tracking-tight text-neutral-dark [text-wrap:balance] md:col-span-2 leading-tight inline-flex items-center gap-1 -ml-[calc(15px+0.50rem)]"
+			><svg aria-hidden width="15" height="15" viewBox="0 0 15 15" fill="none" xmlns="http://www.w3.org/2000/svg">
+				<use href={`${iconsHref}#arrow-left`}></use>
+			</svg><span>freddie</span>
+		</a>
+		<h1 class="font-bold text-4xl font-display text-neutral-light [text-wrap:balance] md:col-span-2 leading-none">
+			<span class="text-neutral-dark">{project.data.title}</span><br />
+			{project.data.subtitle}
+		</h1>
+	</header>
+	<main class="prose">
+		<Content />
+	</main>
+	<footer>
+		<p class="text-center text-sm text-neutral-light">frederico batista, 2024</p>
+	</footer>
 </Layout>

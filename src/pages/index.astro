@@ -20,13 +20,13 @@ const scope = [
 ];
 ---
 
-<Layout class="flex flex-col gap-8" title=":)">
+<Layout title=":)">
 	<header class="grid md:grid-cols-3 gap-4">
 		<h1
 			class="font-bold text-lg md:text-base tracking-tight text-neutral-dark [text-wrap:balance] md:col-span-2 leading-tight"
 		>
 			freddie is a design-driven <span class="whitespace-nowrap"
-				>product engineer<span class="text-neutral-light">✲</span></span
+				>product engineer<span class="text-accent-base">✲</span></span
 			> based in london.
 			<br />he works at inploi, a super cool hiring tech startup
 		</h1>
@@ -43,10 +43,8 @@ const scope = [
 							class="text-neutral-base block fr rounded-full hover:text-neutral-dark duration-500 ease-expo-out transition-all active:scale-95"
 						>
 							<svg width="15" height="15" viewBox="0 0 15 15" fill="none" xmlns="http://www.w3.org/2000/svg">
-								<>
-									<title>{social.name}</title>
-									<use href={social.svg} />
-								</>
+								<title>{social.name}</title>
+								<use href={social.svg} />
 							</svg>
 						</a>
 					</li>
@@ -58,8 +56,9 @@ const scope = [
 	<aside class="grid md:grid-cols-3 gap-4 items-center">
 		<div class="flex flex-col gap-4">
 			<p class="-indent-3 text-sm text-neutral-base [text-wrap:balance]">
-				✲ his scope ranges from design to <span class="whitespace-nowrap">full-stack</span> software engineering, with a
-				focus on creating interfaces that feel right
+				<span class="text-accent-base">✲</span> his scope ranges from design to <span class="whitespace-nowrap"
+					>full-stack</span
+				> software engineering, with a focus on creating interfaces that feel right
 			</p>
 		</div>
 		<ul aria-label="scope diagram" class="flex gap-2 md:col-span-2">
