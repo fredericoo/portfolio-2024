@@ -1,5 +1,4 @@
 ---
-import { ViewTransitions } from 'astro:transitions';
 import { clsx } from 'clsx';
 import '~/styles.css';
 
@@ -18,7 +17,6 @@ const { title, class: className } = Astro.props;
 		<meta name="viewport" content="width=device-width" />
 		<meta name="generator" content={Astro.generator} />
 		<title>{title}</title>
-		<ViewTransitions />
 	</head>
 	<body
 		class={clsx(
