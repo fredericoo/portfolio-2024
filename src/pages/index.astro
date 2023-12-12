@@ -3,7 +3,7 @@ import { getCollection } from 'astro:content';
 import clsx from 'clsx';
 import ProjectCard from '../components/ProjectCard.astro';
 import Layout from '../layouts/Layout.astro';
-import Hero from 'src/components/Hero.astro';
+import Hero from '../components/Hero.astro';
 
 const projects = await getCollection('projects');
 projects.sort((a, b) => (a.data.publishedAt < b.data.publishedAt ? 1 : -1));
