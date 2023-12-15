@@ -1,133 +1,110 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useLayoutEffect, useState } from 'react';
 
-const ONE_BILLION = 1_000_000_000;
+const NUMBER_WITH_DECIMAL = 1.1;
+const NUMBER_WITH_THOUSANDS = 1000;
+const NORMAL_DECIMAL_SEP = '.';
 
-const getDecimalSeparator = (locale: string) => {
-	const numberWithDecimalSeparator = 1.1;
-	return (
-		Intl.NumberFormat(locale)
-			.formatToParts(numberWithDecimalSeparator)
-			.find(part => part.type === 'decimal')?.value || '.'
-	);
+const getDecimalSeparator = (numberFormat: Intl.NumberFormat) => {
+	return numberFormat.formatToParts(NUMBER_WITH_DECIMAL).find(part => part.type === 'decimal')?.value || '';
 };
 
-const getThousandsSeparator = (locale: string) => {
-	const numberWithThousandsSeparator = 1000;
-	return (
-		Intl.NumberFormat(locale)
-			.formatToParts(numberWithThousandsSeparator)
-			.find(part => part.type === 'group')?.value || ','
-	);
+const getThousandsSeparator = (numberFormat: Intl.NumberFormat) => {
+	return numberFormat.formatToParts(NUMBER_WITH_THOUSANDS).find(part => part.type === 'group')?.value || '';
 };
 
-export const getSpecialCharacters = (locale: string) =>
-	[getDecimalSeparator(locale), getThousandsSeparator(locale)] as const;
+export const getSpecialCharacters = (numberFormat: Intl.NumberFormat) =>
+	[getDecimalSeparator(numberFormat), getThousandsSeparator(numberFormat)] as const;
 
 /**
  * Gets key for animating between numbers.
- * @param specialCharacters - These characters will animate separately.
+ * @param char - The character to get the key for.
+ * @param separators - These characters will animate separately.
  * @param formattedIndex - The index of the character in the formatted string.
  * @param formatted - The formatted string.
  */
 export const getKey = ({
-	specialCharacters,
+	char,
+	separators,
 	formattedIndex,
 	formatted,
 }: {
-	specialCharacters: string[] | readonly string[];
+	char: string;
+	separators: readonly string[];
 	formattedIndex: number;
-	formatted: string | number | readonly string[];
+	formatted: string;
 }) => {
-	const char = formatted.toString()[formattedIndex];
-	if (!char) throw new Error('Invalid index');
-	if (specialCharacters.includes(char)) {
-		const specialCharIndex = formatted
-			.toString()
-			.slice(0, formattedIndex)
-			.split('')
-			.filter(c => c === char).length;
-		return `${formattedIndex}-${specialCharIndex}`;
-	}
-
-	const nonSpecialCharactersBeforeIndex = formatted
+	const prevInstancesOfChar = formatted
 		.toString()
 		.slice(0, formattedIndex)
 		.split('')
-		.filter(c => !specialCharacters.includes(c)).length;
+		.filter(c => c === char).length;
 
-	return nonSpecialCharactersBeforeIndex;
+	if (separators.includes(char)) {
+		return [formattedIndex, prevInstancesOfChar, char].join('-');
+	}
+
+	return [char, prevInstancesOfChar].join('-');
 };
 
-export const formatAmount = (
-	locale: string,
-	inputRef: {
-		// Value with **non-localised** value, e.g.: 1000.00
-		value: string | number | readonly string[];
-	},
-) => {
-	const formatter = Intl.NumberFormat(locale, { maximumFractionDigits: 2 }).format;
-	const [decimalSeparator, getThousandsSeparator] = getSpecialCharacters(locale);
+/** Erases from the string all but the first occurrence of a character */
+const eraseExtraCharacters = (value: string, character: string) => {
+	const parts = value.split(character);
+	return [parts[0], parts.slice(1).join('')].filter(Boolean).join(character);
+};
 
-	// normalize the input that may come localised
-	const localisedValue = inputRef.value.toString().replace('.', decimalSeparator);
+const trimToLength = (value: string, intLength: number, decimalLength: number) => {
+	const [integer, decimal] = value.split('.');
+	const trimmedInt = integer?.slice(0, intLength);
+	const trimmedDec = decimal?.slice(0, decimalLength);
+	return [trimmedInt, trimmedDec].filter(Boolean).join('.');
+};
 
-	// remove everything that is not in a decimal separator or a number
-	inputRef.value = localisedValue.replace(new RegExp(`[^0-9${decimalSeparator}]`, 'g'), '');
+export const formatAmount = (numberFormat: Intl.NumberFormat, typedValue: string) => {
+	const formatterOptions = numberFormat.resolvedOptions();
+	const decimalSep = getDecimalSeparator(numberFormat);
+	const formatter = new Intl.NumberFormat(formatterOptions.locale, {
+		...formatterOptions,
+		minimumFractionDigits: 0,
+	});
 
-	// if there are multiple decimal separators, remove all but the last one
-	const decimalSeparatorCount = inputRef.value.split(decimalSeparator).length - 1;
-	if (decimalSeparatorCount > 1) {
-		inputRef.value = inputRef.value.split(decimalSeparator).slice(0, decimalSeparatorCount).join(decimalSeparator);
+	let value = typedValue
+		// remove everything that is not in a decimal separator or a number
+		.replace(new RegExp(`[^0-9${decimalSep}]`, 'g'), '')
+		// normalise all decimal separators to a dot
+		.replace(new RegExp(`[${decimalSep}]`, 'g'), NORMAL_DECIMAL_SEP);
+
+	value = eraseExtraCharacters(value, NORMAL_DECIMAL_SEP);
+	value = trimToLength(value, 10, formatterOptions.maximumFractionDigits || 2);
+
+	const asNumber = isNaN(Number(value)) ? 0 : Number(value);
+	const parts = formatter.formatToParts(asNumber);
+	let asString = parts
+		.filter(part => ['fraction', 'group', 'decimal', 'integer'].includes(part.type))
+		.map(part => part.value)
+		.join('');
+	// get rid of ending zeros and decimal separator
+	asString = asString.replace(new RegExp(`\\${decimalSep}0*$`), '');
+
+	// readd the decimal separator to the end of the formatted string if it was there
+	if (!asString.includes(decimalSep)) {
+		const charsToReadd = typedValue.match(
+			new RegExp(`(\\${decimalSep}0{0,${formatterOptions.maximumFractionDigits}})0*$`),
+		)?.[1];
+
+		if (charsToReadd) {
+			asString += charsToReadd;
+		}
 	}
 
-	// erase any digits over 2 decimal places
-	const decimalSeparatorPlace = inputRef.value.indexOf(decimalSeparator);
-	if (decimalSeparatorPlace !== -1 && inputRef.value.length > decimalSeparatorPlace + 2) {
-		inputRef.value = inputRef.value.slice(0, decimalSeparatorPlace + 3);
-	}
-
-	const asNumber = Math.min(ONE_BILLION, Number(inputRef.value.replace(decimalSeparator, '.')));
-
-	// catch invalid values and set to zero
-	let asString = isNaN(asNumber) ? '0' : formatter(asNumber);
-
-	// readd the decimal separator if it was removed
-	const lastChar = inputRef.value[inputRef.value.length - 1];
-	if (
-		lastChar &&
-		inputRef.value[inputRef.value.length - 1] &&
-		[decimalSeparator, getThousandsSeparator].includes(lastChar)
-	) {
-		asString += lastChar;
-	}
-
-	// if last character was a zero and it was after a decimal separator, add it back
-	if (lastChar === '0' && decimalSeparatorPlace !== -1 && decimalSeparatorPlace === inputRef.value.length - 3) {
-		asString += lastChar;
-	}
 	return { asNumber, asString };
 };
 
-export const usePreviousValue = <T>(value: T) => {
-	const previousValueRef = useRef<T>();
+const useIsomorphicLayoutEffect = typeof window !== 'undefined' ? useLayoutEffect : useEffect;
+export const useIsHydrated = () => {
+	const [isHydrated, setIsHydrated] = useState(false);
+	useIsomorphicLayoutEffect(() => {
+		setIsHydrated(true);
+	}, []);
 
-	useEffect(() => {
-		previousValueRef.current = value;
-	}, [value]);
-
-	return previousValueRef.current;
-};
-
-export const useDebouncedValue = <T>(value: T, delay?: number): T => {
-	const [debouncedValue, setDebouncedValue] = useState<T>(value);
-
-	useEffect(() => {
-		const timer = setTimeout(() => setDebouncedValue(value), delay || 500);
-
-		return () => {
-			clearTimeout(timer);
-		};
-	}, [value, delay]);
-
-	return debouncedValue;
+	return isHydrated;
 };

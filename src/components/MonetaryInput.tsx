@@ -1,9 +1,6 @@
-import clsx from 'clsx';
 import { AnimatePresence, LayoutGroup, motion, type Variants } from 'framer-motion';
-import React, { useEffect, useId, useMemo, useState, type ComponentProps } from 'react';
-import { formatAmount, getKey, getSpecialCharacters, useDebouncedValue, usePreviousValue } from './MonetaryInput.utils';
-
-const CURRENCY_WIDTH = '1.25ch';
+import React, { useId, useMemo, useState, type ComponentPropsWithoutRef } from 'react';
+import { formatAmount, getKey, getSpecialCharacters, useIsHydrated } from './MonetaryInput.utils';
 
 const variants = {
 	hidden: { y: '1.2em' },
@@ -13,117 +10,124 @@ const variants = {
 } satisfies Variants;
 
 type MonetaryInputInternalProps = {
-	/**
-	 * Locale according to the Javascript Intl Api
-	 * @see https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Intl/NumberFormat
+	/** Make use of data attributes to style the character
+	 * - data-char="number" for numbers
+	 * - data-char="separator" for separators
+	 * - data-zero="true" if the input’s total value is 0
 	 */
-	locale?: string;
-	currencySymbol?: string;
-} & Omit<ComponentProps<'input'>, 'children'>;
+	characterClassName?: string;
+
+	/** A custom **stable** number format reference for usage with other locales, currency  */
+	numberFormat?: Intl.NumberFormat;
+};
 
 /**
  * A localisable currency amount input with sleek animations.
  */
-export const MonetaryInput: React.FC<MonetaryInputInternalProps> = ({
-	locale = 'en-US',
+export const MonetaryInput = ({
+	numberFormat = new Intl.NumberFormat('en-US', { maximumFractionDigits: 2 }),
 	value: controlledValue,
+	characterClassName,
 	onChange,
-	defaultValue = '0',
-	currencySymbol = '$',
-	className,
 	name,
+	defaultValue = '0',
+	type = 'text',
+	pattern = '[0-9,.]*',
+	inputMode = 'decimal',
+	autoComplete = 'off',
+	autoCorrect = 'off',
 	...props
-}) => {
-	const [internalValue, setInternalValue] = useState(formatAmount(locale, { value: controlledValue || defaultValue }));
-	const specialCharacters = useMemo(() => getSpecialCharacters(locale), [locale]);
-	const previousLocale = usePreviousValue(locale);
-	const displayValue = useDebouncedValue(internalValue, 50);
-	const layoutId = useId();
+}: MonetaryInputInternalProps & Omit<ComponentPropsWithoutRef<'input'>, 'children'>) => {
+	const specialCharacters = useMemo(() => getSpecialCharacters(numberFormat), [numberFormat]);
+	const isHydrated = useIsHydrated();
+	const [internalValue, setInternalValue] = useState<string>(defaultValue.toString());
+	const formattedValue = formatAmount(numberFormat, controlledValue?.toString() || internalValue);
 
-	// whenever controlledValue or locale changes, update internalValue
-	useEffect(() => {
-		const hasLocaleChanged = previousLocale !== locale;
-		const hasControlledValueChanged = internalValue.asNumber !== controlledValue;
-
-		if (controlledValue !== undefined && (hasLocaleChanged || hasControlledValueChanged)) {
-			// if there is a controlled value and needs update, re-set it
-			const newValue = formatAmount(locale, { value: controlledValue?.toString() });
-			setInternalValue(newValue);
-		} else {
-			// if uncontrolled, just refresh the display value
-			setInternalValue(internalValue => formatAmount(locale, { value: internalValue.asString }));
-		}
-	}, [controlledValue, internalValue.asNumber, locale, previousLocale]);
-
-	const onType = (e: React.ChangeEvent<HTMLInputElement>) => {
-		const newValue = formatAmount(locale, e.target);
-
+	const handleInternalChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+		setInternalValue(e.target.value);
+		// we modify the value so `onChange` reflects the visual feedback.
+		const newValue = formatAmount(numberFormat, e.target.value);
 		e.target.value = newValue.asNumber.toString();
-		setInternalValue(newValue);
 		onChange?.(e);
 	};
 
 	return (
-		<div className={clsx('flex relative w-full', className)}>
-			<input type="hidden" value={internalValue.asNumber} name={name} />
-
-			<span className="inline-block text-neutral-lighter" style={{ width: CURRENCY_WIDTH }}>
-				{currencySymbol}
-			</span>
-			<LayoutGroup id={layoutId}>
-				<AnimatedCurrency value={displayValue.asString} specialCharacters={specialCharacters} />
-			</LayoutGroup>
+		<>
+			{isHydrated && (
+				<>
+					<AnimatedInputValue
+						value={formattedValue.asString}
+						className={characterClassName}
+						separators={specialCharacters}
+						isHydrated={isHydrated}
+					/>
+					<input type="hidden" value={formattedValue.asNumber} name={name} />
+				</>
+			)}
 			<input
-				className="bg-transparent rounded-none selection:bg-neutral-lighter selection:text-transparent absolute z-0 inset-0 border-b border-neutral-light [font-kerning:none] p-0 transition-all duration-500 ease-expo-out text-transparent caret-neutral-base focus:border-b-accent-base focus:outline-none focus:shadow-[0_8px_6px_-6px_#e54d2e20]"
-				style={{ paddingInlineStart: CURRENCY_WIDTH }}
-				type="text"
-				inputMode="decimal"
-				pattern="[0-9,.]*"
-				autoComplete="off"
-				autoCorrect="off"
-				value={internalValue.asString}
-				onChange={onType}
+				name={isHydrated ? undefined : name}
+				type={type}
+				inputMode={inputMode}
+				pattern={pattern}
+				autoComplete={autoComplete}
+				autoCorrect={autoCorrect}
+				value={formattedValue.asString}
+				onChange={handleInternalChange}
+				style={isHydrated ? { color: 'transparent', position: 'absolute', zIndex: 0, inset: 0 } : { maxWidth: '100%' }}
 				{...props}
 			/>
-		</div>
+		</>
 	);
 };
 
 type AnimatedCurrencyProps = {
-	value: string | number | readonly string[];
-	specialCharacters: string[] | readonly string[];
+	value: string;
+	separators: readonly string[];
+	className?: string | undefined;
+	isHydrated: boolean;
 };
 
-export const AnimatedCurrency: React.FC<AnimatedCurrencyProps> = ({ value, specialCharacters }) => {
+const transition = { duration: 0.3, ease: 'circOut' };
+
+const AnimatedInputValue = ({ value, separators, className }: AnimatedCurrencyProps) => {
+	const layoutId = useId();
+
 	return (
-		<div className="relative overflow-hidden flex-grow z-10 select-none pointer-events-none">
-			<AnimatePresence initial={false} mode="popLayout">
-				{value
-					.toString()
-					.split('')
-					.map((char, i) => (
-						<motion.span
-							className="h-full inline-block overflow-hidden -mb-[0.2em]"
-							key={`${char}-${getKey({ formattedIndex: i, formatted: value, specialCharacters })}`}
-							layout
-						>
+		<div style={{ pointerEvents: 'none', flexGrow: '1', position: 'relative', overflow: 'hidden', userSelect: 'none' }}>
+			<LayoutGroup id={layoutId}>
+				<AnimatePresence initial={false} mode="popLayout">
+					{value
+						.toString()
+						.split('')
+						.map((char, i) => (
 							<motion.span
-								className={clsx('text-neutral-dark block select-none pointer-events-none', {
-									'text-neutral-base': value === '0',
-								})}
-								variants={variants}
-								initial={'hidden'}
-								animate={'shown'}
-								exit={i === 0 ? 'exitZero' : 'exitNumber'}
-								transition={{ duration: 0.15 }}
+								style={{ height: '100%', display: 'inline-block', overflow: 'hidden', marginBottom: '-0.2em' }}
+								key={getKey({ char, formattedIndex: i, formatted: value, separators })}
+								layout="position"
 							>
-								{char}
+								<motion.span
+									data-char={separators.includes(char) ? 'separator' : 'number'}
+									data-zero={value === '0' ? 'true' : undefined}
+									style={{
+										display: 'block',
+										userSelect: 'none',
+										pointerEvents: 'none',
+										position: 'relative',
+										zIndex: 1,
+									}}
+									className={className}
+									variants={variants}
+									initial="hidden"
+									animate="shown"
+									exit={i === 0 ? 'exitZero' : 'exitNumber'}
+									transition={transition}
+								>
+									{char}
+								</motion.span>
 							</motion.span>
-						</motion.span>
-					))}
-			</AnimatePresence>
+						))}
+				</AnimatePresence>
+			</LayoutGroup>
 		</div>
 	);
 };
-
-export type AmountInputProps = Parameters<typeof MonetaryInput>[0];

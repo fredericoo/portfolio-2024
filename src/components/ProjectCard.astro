@@ -34,12 +34,12 @@ const label = cva('relative', {
 		rel={project.data.externalLink ? 'noopener noreferrer' : undefined}
 		transition:animate="none"
 		transition:name={`container-${project.slug}`}
-		class="rounded-3xl relative fr transition-all overflow-hidden ease-expo-out duration-500 active:scale-95 bg-neutral-lighter p-4 w-full h-full font-bold text-base leading-tight flex flex-col"
+		class="rounded-3xl relative fr transition-all overflow-hidden ease-expo-out duration-500 active:scale-95 bg-neutral-lighter p-4 w-full h-full text-sm leading-tight flex flex-col"
 	>
 		<Image draggable="false" class="absolute inset-0" src={project.data.image} alt={project.data.imageAlt} />
 
 		<div transition:animate="none" transition:name={`title-${project.slug}`} class={label(project.data)}>
-			<p class="text-neutral-dark">{project.data.title}</p>
+			<p class="text-neutral-dark font-bold">{project.data.title}</p>
 			<p class="text-neutral-light">{project.data.subtitle}</p>
 		</div>
 	</a>
