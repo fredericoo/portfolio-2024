@@ -1,84 +1,130 @@
 import { AnimatePresence, LayoutGroup, motion, type Variants } from 'framer-motion';
-import React, { useId, useMemo, useState, type ComponentPropsWithoutRef } from 'react';
-import { formatAmount, getKey, getSpecialCharacters, useIsHydrated } from './MonetaryInput.utils';
+import React, {
+	useId,
+	useMemo,
+	useState,
+	useContext,
+	type ComponentPropsWithoutRef,
+	forwardRef,
+	type ComponentProps,
+} from 'react';
+import {
+	formatAmount,
+	getCurrencySymbol,
+	getKey,
+	getSpecialCharacters,
+	useDebouncedValue,
+	useIsHydrated,
+} from './MonetaryInput.utils';
 
+const ONE_FRAME = 1000 / 60;
+
+const transition = { duration: 0.3, ease: 'circOut' };
 const variants = {
-	hidden: { y: '1.2em' },
+	hiddenZero: { y: '-1.2em' },
+	hiddenNumber: { y: '1.2em' },
 	shown: { y: 0 },
 	exitNumber: { y: '1.2em' },
 	exitZero: { y: '-1.2em' },
 } satisfies Variants;
 
-type MonetaryInputInternalProps = {
-	/** Make use of data attributes to style the character
-	 * - data-char="number" for numbers
-	 * - data-char="separator" for separators
-	 * - data-zero="true" if the input’s total value is 0
-	 */
-	characterClassName?: string;
+const FormatContext = React.createContext<Intl.NumberFormat>(
+	new Intl.NumberFormat('en-US', { maximumFractionDigits: 2 }),
+);
 
-	/** A custom **stable** number format reference for usage with other locales, currency  */
+export interface MonetaryInputRootProps extends ComponentProps<'div'> {
+	/** A **stable** number format reference for usage with other locales, currencies, decimals…  */
 	numberFormat?: Intl.NumberFormat;
-};
+}
+const Root = forwardRef<HTMLDivElement, MonetaryInputRootProps>(
+	({ numberFormat = new Intl.NumberFormat('en-US', { maximumFractionDigits: 2 }), ...props }, ref) => {
+		return (
+			<FormatContext.Provider value={numberFormat}>
+				<div ref={ref} {...props} />
+			</FormatContext.Provider>
+		);
+	},
+);
 
+export interface MonetaryInputAmountProps extends Omit<ComponentPropsWithoutRef<'div'>, 'children' | 'className'> {
+	className?: {
+		/** Applies to the wrapper <div> around the amount selector.
+		 *  This is there to allow for the animated characters to be positioned absolutely.
+		 */
+		wrapper?: string;
+		/** Applies to the actual <input> DOM element inside there. */
+		input?: string;
+		/** Make use of data attributes to style the character
+		 * - data-char="separator" for separators
+		 * - data-char="zero" if the input’s total value is 0
+		 */
+		character?: string;
+	};
+	name?: string;
+	defaultValue?: string;
+	value?: string;
+}
 /**
  * A localisable currency amount input with sleek animations.
  */
-export const MonetaryInput = ({
-	numberFormat = new Intl.NumberFormat('en-US', { maximumFractionDigits: 2 }),
-	value: controlledValue,
-	characterClassName,
-	onChange,
-	name,
-	defaultValue = '0',
-	type = 'text',
-	pattern = '[0-9,.]*',
-	inputMode = 'decimal',
-	autoComplete = 'off',
-	autoCorrect = 'off',
-	...props
-}: MonetaryInputInternalProps & Omit<ComponentPropsWithoutRef<'input'>, 'children'>) => {
-	const specialCharacters = useMemo(() => getSpecialCharacters(numberFormat), [numberFormat]);
-	const isHydrated = useIsHydrated();
-	const [internalValue, setInternalValue] = useState<string>(defaultValue.toString());
-	const formattedValue = formatAmount(numberFormat, controlledValue?.toString() || internalValue);
+export const Amount = forwardRef<HTMLInputElement, MonetaryInputAmountProps>(
+	({ value: controlledValue, className, onChange, name, defaultValue = '', ...props }, ref) => {
+		const format = useContext(FormatContext);
+		const specialCharacters = useMemo(() => getSpecialCharacters(format), [format]);
+		const isHydrated = useIsHydrated();
+		const [internalValue, setInternalValue] = useState<string>();
+		const formattedValue = formatAmount(
+			format,
+			controlledValue?.toString() || internalValue || defaultValue.toString(),
+		);
 
-	const handleInternalChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-		setInternalValue(e.target.value);
-		// we modify the value so `onChange` reflects the visual feedback.
-		const newValue = formatAmount(numberFormat, e.target.value);
-		e.target.value = newValue.asNumber.toString();
-		onChange?.(e);
-	};
+		const handleInternalChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+			setInternalValue(e.target.value);
+			// we modify the value so `onChange` reflects the visual feedback.
+			const newValue = formatAmount(format, e.target.value);
+			e.target.value = newValue.asNumber.toString();
+			onChange?.(e);
+		};
 
-	return (
-		<>
-			{isHydrated && (
-				<>
-					<AnimatedInputValue
-						value={formattedValue.asString}
-						className={characterClassName}
-						separators={specialCharacters}
-						isHydrated={isHydrated}
-					/>
-					<input type="hidden" value={formattedValue.asNumber} name={name} />
-				</>
-			)}
-			<input
-				name={isHydrated ? undefined : name}
-				type={type}
-				inputMode={inputMode}
-				pattern={pattern}
-				autoComplete={autoComplete}
-				autoCorrect={autoCorrect}
-				value={formattedValue.asString}
-				onChange={handleInternalChange}
-				style={isHydrated ? { color: 'transparent', position: 'absolute', zIndex: 0, inset: 0 } : { maxWidth: '100%' }}
-				{...props}
-			/>
-		</>
-	);
-};
+		const inputClassName = isHydrated
+			? className?.input
+			: [className?.input, className?.character].filter(Boolean).join(' ');
+
+		return (
+			<div className={className?.wrapper} {...props}>
+				{isHydrated && (
+					<>
+						<AnimatedInputValue
+							value={formattedValue.asString}
+							className={className?.character}
+							separators={specialCharacters}
+							isHydrated={isHydrated}
+						/>
+						<input type="hidden" value={formattedValue.asNumber} name={name} />
+					</>
+				)}
+				<input
+					ref={ref}
+					name={isHydrated ? undefined : name}
+					type="text"
+					inputMode="decimal"
+					pattern="[0-9,.]*"
+					autoComplete="off"
+					autoCorrect="off"
+					placeholder={isHydrated ? undefined : formattedValue.asString}
+					value={isHydrated ? formattedValue.asString : defaultValue.toString()}
+					onChange={handleInternalChange}
+					style={
+						isHydrated
+							? { color: 'transparent', zIndex: 0, width: 'inherit', fontKerning: 'none' }
+							: { maxWidth: '100%' }
+					}
+					className={inputClassName}
+				/>
+			</div>
+		);
+	},
+);
 
 type AnimatedCurrencyProps = {
 	value: string;
@@ -87,27 +133,34 @@ type AnimatedCurrencyProps = {
 	isHydrated: boolean;
 };
 
-const transition = { duration: 0.3, ease: 'circOut' };
-
 const AnimatedInputValue = ({ value, separators, className }: AnimatedCurrencyProps) => {
 	const layoutId = useId();
-
+	// This prevents clumping of numbers, which would cause the animation to be janky.
+	const displayValue = useDebouncedValue(value, ONE_FRAME);
+	const isZero = displayValue === '0';
 	return (
-		<div style={{ pointerEvents: 'none', flexGrow: '1', position: 'relative', overflow: 'hidden', userSelect: 'none' }}>
+		<div
+			style={{
+				pointerEvents: 'none',
+				position: 'absolute',
+				inset: 0,
+				overflow: 'hidden',
+				userSelect: 'none',
+			}}
+		>
 			<LayoutGroup id={layoutId}>
 				<AnimatePresence initial={false} mode="popLayout">
-					{value
+					{displayValue
 						.toString()
 						.split('')
 						.map((char, i) => (
 							<motion.span
 								style={{ height: '100%', display: 'inline-block', overflow: 'hidden', marginBottom: '-0.2em' }}
-								key={getKey({ char, formattedIndex: i, formatted: value, separators })}
+								key={isZero ? 'zero' : getKey({ char, formattedIndex: i, formatted: displayValue, separators })}
 								layout="position"
 							>
 								<motion.span
-									data-char={separators.includes(char) ? 'separator' : 'number'}
-									data-zero={value === '0' ? 'true' : undefined}
+									data-char={separators.includes(char) ? 'separator' : isZero ? 'zero' : 'number'}
 									style={{
 										display: 'block',
 										userSelect: 'none',
@@ -117,9 +170,9 @@ const AnimatedInputValue = ({ value, separators, className }: AnimatedCurrencyPr
 									}}
 									className={className}
 									variants={variants}
-									initial="hidden"
+									initial={isZero ? 'hiddenZero' : 'hiddenNumber'}
 									animate="shown"
-									exit={i === 0 ? 'exitZero' : 'exitNumber'}
+									exit={isZero ? 'exitZero' : 'exitNumber'}
 									transition={transition}
 								>
 									{char}
@@ -131,3 +184,16 @@ const AnimatedInputValue = ({ value, separators, className }: AnimatedCurrencyPr
 		</div>
 	);
 };
+
+export interface MonetaryInputCurrencyProps extends Omit<ComponentProps<'div'>, 'children'> {}
+const Currency = forwardRef<HTMLDivElement, MonetaryInputCurrencyProps>((props, ref) => {
+	const format = useContext(FormatContext);
+	const currencySymbol = useMemo(() => getCurrencySymbol(format), [format]);
+	return (
+		<div ref={ref} {...props}>
+			{currencySymbol}
+		</div>
+	);
+});
+
+export const MonetaryInput = { Root, Currency, Amount };

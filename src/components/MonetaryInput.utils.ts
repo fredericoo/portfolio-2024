@@ -15,6 +15,10 @@ const getThousandsSeparator = (numberFormat: Intl.NumberFormat) => {
 export const getSpecialCharacters = (numberFormat: Intl.NumberFormat) =>
 	[getDecimalSeparator(numberFormat), getThousandsSeparator(numberFormat)] as const;
 
+export const getCurrencySymbol = (numberFormat: Intl.NumberFormat) => {
+	return numberFormat.formatToParts(0).find(part => part.type === 'currency')?.value;
+};
+
 /**
  * Gets key for animating between numbers.
  * @param char - The character to get the key for.
@@ -107,4 +111,18 @@ export const useIsHydrated = () => {
 	}, []);
 
 	return isHydrated;
+};
+
+export const useDebouncedValue = <T>(value: T, delay?: number): T => {
+	const [debouncedValue, setDebouncedValue] = useState<T>(value);
+
+	useEffect(() => {
+		const timer = setTimeout(() => setDebouncedValue(value), delay || 500);
+
+		return () => {
+			clearTimeout(timer);
+		};
+	}, [value, delay]);
+
+	return debouncedValue;
 };
